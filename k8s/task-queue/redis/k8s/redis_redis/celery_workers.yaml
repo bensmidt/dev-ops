@@ -1,0 +1,52 @@
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: celery-workers
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: celery-workers-secret
+  namespace: celery-workers
+type: Opaque
+data:
+  CELERY_MESSAGE_BROKER_URL: cmVkaXM6Ly86dGVzdEAxMjNAcmVkaXMtc2VydmljZS5yZWRpcy1icm9rZXI6NjM3OS8w
+  # redis://:test@123@redis-service.redis-broker:6379/0
+  # redis://:<redis-broker-password>@<service>.<namespace>:<container-port>/0
+  CELERY_DATABASE_URL: cmVkaXM6Ly86dGVzdEAxMjNAcmVkaXMtc2VydmljZS5yZWRpcy1kYXRhYmFzZTo2Mzc5LzA=
+  # redis://:test@123@redis-service.redis-database:6379/0
+  # redis://:<redis-database-password>@<service>.<namespace>:<container-port>/0 
+  SECRET_KEY: dGVzdA== # test
+  REDIS_PASSWORD: dGVzdEAxMjM= # test@123
+
+---
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-workers-deployment
+  namespace: celery-workers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      component: worker
+  template:
+    metadata:
+      labels:
+        component: worker
+    spec:
+      containers:
+        - name: celery-worker
+          image: bensmidt/flask-celery-async-microservice
+          command:
+            - "bash"
+            - "-c"
+            - "celery -A main.celery worker -l info"
+          envFrom:
+            - secretRef:
+                name: celery-workers-secret
+---
+

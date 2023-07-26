@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower-deployment
+  namespace: celery-workers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: flower
+  template:
+    metadata:
+      labels:
+        component: flower
+    spec:
+      containers:
+      - name: flower-monitoring
+        image: mher/flower
+        command: ["celery", "--broker=$(CELERY_MESSAGE_BROKER_URL)", "flower", "--port=5555"]
+        ports:
+          - containerPort: 5555
+        envFrom:
+          - secretRef:
+              name: celery-workers-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower-service
+  namespace: celery-workers
+spec:
+  selector:
+    component: flower
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5555
+  type: NodePort

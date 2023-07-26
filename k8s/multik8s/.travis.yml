@@ -1,0 +1,28 @@
+sudo: required 
+services: 
+  - docker: 
+env: 
+  global: 
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1 # disable prompts to not accept any input
+before_install: 
+  - openssl aes-256-cbc -K $encrypted_8d17910c8f3a_key -iv $encrypted_8d17910c8f3a_iv -in sa.json.enc -out sa.json -d
+  - curl https://sdk.cloud.google.com | bash > /dev/null; 
+  - source $HOME/google-cloud-sdk/path.bash.inc 
+  - gcloud components update kubectl 
+  - gcloud auth activate-service-account --key-file sa.json
+  - gcloud config set project tribal-spanner-387501
+  - gcloud config set compute/zone us-central1-c 
+  - gcloud container clusters get-credentials multi-cluster
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t benjaminsmidt/react-test -f ./client/Dockerfile.dev ./client
+
+script: 
+  - docker run -e CI=true benjaminsmidt/react-test npm test
+
+deploy: 
+  provider: script 
+  script: bash ./deploy.sh 
+  on: 
+    branch: main
+

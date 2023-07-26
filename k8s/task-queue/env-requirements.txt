@@ -1,0 +1,8 @@
+celery 
+Flask
+gevent
+gunicorn
+locust
+requests
+SQLAlchemy
+flower

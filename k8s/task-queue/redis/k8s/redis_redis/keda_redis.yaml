@@ -1,0 +1,33 @@
+# Does not work! I could not figure out how to authenticate Redis (honestly didn't 
+# that hard since RabbitMQ worked and I have no need to use Redis as the broker)
+DO NOT USE
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: celery-worker-scaler
+  namespace: celery-workers
+spec:
+  scaleTargetRef:
+    name: celery-workers-deployment
+  pollingInterval: 3
+  minReplicaCount: 2
+  maxReplicaCount: 30
+  triggers:
+    - type: redis
+      metadata:
+        address: redis-service.redis-broker:6379
+        password: $(REDIS_PASSWORD)
+        listName: celery
+        listLength: "10"
+        name: redis-auth-trigger
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-worker-trigger
+  namespace: celery-workers
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: celery-workers-secret
+      key: CELERY_MESSAGE_BROKER_URL

@@ -1,0 +1,20 @@
+# https://kubernetes.github.io/ingress-nginx/deploy/#quick-start
+# simple use "http://localhost" to access ingress-service locally
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-service
+  namespace: flask-backend # must match namespace of wherever you're forwarding to
+  annotations:
+    kubernetes.io/ingress.class: 'nginx'
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flask-server-service
+                port:
+                  number: 3000

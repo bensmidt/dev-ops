@@ -1,0 +1,17 @@
+# unwanted folders
+git-practice/
+
+# node
+node_modules/
+
+# python
+*.pyc
+*/__pycache__/*
+
+# environment
+/venv/*
+.env
+env/
+
+# MacOS
+.DS_Store

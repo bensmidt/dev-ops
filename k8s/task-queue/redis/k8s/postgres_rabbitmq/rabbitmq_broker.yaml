@@ -1,0 +1,65 @@
+---
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rabbitmq-broker
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-secret
+  namespace: rabbitmq-broker
+type: Opaque
+data:
+  RABBITMQ_DEFAULT_USER: YWRtaW4=
+  # admin
+  RABBITMQ_DEFAULT_PASS: c2VjcmV0cGFzc3dvcmQ=
+  # secretpassword
+---
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+  namespace: rabbitmq-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: message-broker
+  template:
+    metadata:
+      labels:
+        component: message-broker
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.11.17-management
+        envFrom:
+            - secretRef:
+                name: rabbitmq-secret
+        ports:
+        - containerPort: 15672
+          # name: management
+        - containerPort: 5672
+          # name: rabbitmq
+---
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+  namespace: rabbitmq-broker
+spec:
+  selector:
+    component: message-broker
+  ports:
+  - port: 5672
+    name: rabbitmq
+    targetPort: 5672
+    protocol: TCP
+  - port: 15672
+    name: rabbitmq-mgmt
+    targetPort: 15672

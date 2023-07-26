@@ -1,0 +1,55 @@
+---
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis-broker
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: redis-broker
+type: Opaque
+data:
+  REDIS_PASSWORD: dGVzdEAxMjM= # test@123
+---
+# deploy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  namespace: redis-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: broker
+  template:
+    metadata:
+      labels:
+        component: broker
+    spec:
+      containers:
+        - image: redis:latest
+          name: redis
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
+          ports:
+            - containerPort: 6379
+---
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: redis-broker
+spec:
+  ports:
+    - port: 6379
+  selector:
+    component: broker
+---

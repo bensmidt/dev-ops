@@ -1,0 +1,60 @@
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flask-backend
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-secret
+  namespace: flask-backend
+type: Opaque
+data:
+  CELERY_MESSAGE_BROKER_URL: YW1xcDovL2FkbWluOnNlY3JldHBhc3N3b3JkQHJhYmJpdG1xLXNlcnZpY2UucmFiYml0bXEtYnJva2VyOjU2NzI=
+  # amqp://admin:secretpassword@rabbitmq-service.rabbitmq-broker:5672
+  # amqp://<rabbitmq-user>:<rabbitmq-password>@<service>.<namespace:5672
+  CELERY_DATABASE_URL: ZGIrcG9zdGdyZXNxbDovL3Rlc3Q6dGVzdEAxMjNAcG9zdGdyZXMtc2VydmljZS5wb3N0Z3Jlcy1kYXRhYmFzZTo1NDMyL2ZsYXNrLXNlcnZpY2U=
+  # db+postgresql://test:test@123@postgres-service.postgres-database:5432/flask-service
+  # db+postgresql://<postgres-user>:<postgres-password>@<service>.<namespace>:<container-port>/<pg-database>
+  SECRET_KEY: dGVzdA==
+  # test
+---
+# deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-server-deployment
+  namespace: flask-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: backend
+  template:
+    metadata:
+      labels:
+        component: backend
+    spec:
+      containers:
+        - name: flask-server
+          image: bensmidt/flask-celery-async-microservice
+          envFrom:
+            - secretRef:
+                name: flask-secret
+          ports:
+            - containerPort: 5000
+---
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-server-service
+  namespace: flask-backend
+spec:
+  selector:
+    component: backend
+  ports:
+    - port: 3000
+      targetPort: 5000

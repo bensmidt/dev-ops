@@ -1,0 +1,55 @@
+---
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis-database
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: redis-database
+type: Opaque
+data:
+  REDIS_PASSWORD: dGVzdEAxMjM= # test@123
+---
+# deploy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  namespace: redis-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: database
+  template:
+    metadata:
+      labels:
+        component: database
+    spec:
+      containers:
+        - image: redis:latest
+          name: redis
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
+          ports:
+            - containerPort: 6379
+---
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: redis-database
+spec:
+  ports:
+    - port: 6379
+  selector:
+    component: database
+---

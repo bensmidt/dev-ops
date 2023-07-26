@@ -1,0 +1,56 @@
+---
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgres-database
+---
+# secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: postgres-database
+type: Opaque
+data:
+  POSTGRES_USER: dGVzdA== # "test"
+  POSTGRES_DB: Zmxhc2stc2VydmljZQ== # "flask-service"
+  POSTGRES_PASSWORD: dGVzdEAxMjM= # test@123
+---
+# deploy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: postgres-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: database
+  template:
+    metadata:
+      labels:
+        component: database
+    spec:
+      containers:
+        - image: postgres:15.3-alpine
+          name: postgresql
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          ports:
+            - containerPort: 5432
+---
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: postgres-database
+spec:
+  ports:
+    - port: 5432
+  selector:
+    component: database
+---

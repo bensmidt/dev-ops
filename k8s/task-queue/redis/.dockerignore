@@ -1,0 +1,9 @@
+*.yaml
+*.pyc
+*/*.pyc
+.env
+.DS_Store
+.git/*
+venv/*
+.git
+venv
